@@ -15,6 +15,7 @@ class MotorDeFraude:
         # Guardamos la cadena de conexión en una variable de la instancia
         self.conn_string = connection_string
         print("Inicializando motor de fraude. Esperando transacciones")
+        print("Presioná Ctrl + C para frenarlo.")
 
     def obtenerPendientes(self):
         conn = pyodbc.connect(self.conn_string)
