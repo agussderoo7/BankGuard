@@ -1,5 +1,6 @@
 import pyodbc
 import pandas as pd
+import time
 
 # Configuración
 CONN_STRING = (
@@ -58,6 +59,11 @@ class MotorDeFraude:
 
         conn.commit()
         conn.close()
+
+    def iniciarVigilancia(self):
+        while True:
+            self.procesarLote()
+            time.sleep(5) # Espera 5 segundos antes de volver a buscar
 
 if __name__ == "__main__":
     # Instancia el objeto y lo ponemos a trabajar
