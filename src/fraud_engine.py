@@ -81,17 +81,14 @@ class MotorDeFraude:
             # Veredicto
             if es_fraude:
                 nuevo_estado = 'RECHAZADA'
-                print(f"BLOQUEADO Transacción {tx_id} | Cliente {cliente_id} | {razon}")
+                print(f"BLOQUEADA Transacción {tx_id} | Cliente {cliente_id} | {razon}")
                 
-                # Guardar en Auditoría (Opcional porque, si falla, no rompe el programa)
-                try:
-                    audit_sql = """
-                        INSERT INTO Auditoria_Fraude (transaccion_id, regla_activada, riesgo_score, accion_tomada, detalle)
-                        VALUES (?, ?, ?, ?, ?)
-                    """
-                    cursor.execute(audit_sql, (tx_id, regla, 95, 'BLOQUEO', razon))
-                except:
-                    pass # Si no existe la tabla auditoría, seguimos igual
+                audit_sql = """
+                    INSERT INTO Auditoria_Fraude (transaccion_id, regla_activada, riesgo_score, accion_tomada, detalle)
+                    VALUES (?, ?, ?, ?, ?)
+                """
+                # Si falla, el programa va a explotar y decir por qué
+                cursor.execute(audit_sql, (tx_id, regla, 95, 'BLOQUEO', razon))
             else:
                 nuevo_estado = 'APROBADA'
 

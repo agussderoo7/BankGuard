@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
-import pyodbc
 import plotly.express as px
+from sqlalchemy import create_engine, text
 
 # Configuración de página y estilos
 st.set_page_config(page_title="BankGuard Monitor V2", page_icon="🛡️", layout="wide")
@@ -21,123 +21,109 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # Conexión a la base de datos
-CONN_STRING = (
-    r"DRIVER={ODBC Driver 17 for SQL Server};"
-    r"SERVER=LOCALHOST;"
-    r"DATABASE=BankGuard;"
-    r"Trusted_Connection=yes;"
-)
+SERVER = 'LOCALHOST'
+DATABASE = 'BankGuard'
+CONNECTION_STRING = F"mssql+pyodbc://{SERVER}/{DATABASE}?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes"
 
-# Usamos @st.cache_data para que no recargue la base de datos a cada click si los datos no cambiaron
-@st.cache_data 
+@st.cache_resource
+def getEngine():
+    return create_engine(CONNECTION_STRING)
+
+engine = getEngine()
+
+# Título
+c_logo, c_title = st.columns([1, 6])
+with c_logo:
+    st.markdown("# 🛡️")
+with c_title:
+    st.title("BankGuard Security Center")
+    st.markdown("Monitoreo de fraudes transaccionales en tiempo real")
+
+st.divider()
+
+# Sidebar
+st.sidebar.header("Filtros de Seguridad")
+tipo_filtro = st.sidebar.multiselect("Tipo de Operación", ["COMPRA", "TRANSFERENCIA", "RETIRO", "PAGO_SERVICIO"])
+
+# Botón para refrescar
+if st.sidebar.button("Actualizar Datos"):
+    st.cache_data.clear()
+
+# Lógica de datos
 def cargar_datos():
-    conn = pyodbc.connect(CONN_STRING)
-    query = "SELECT * FROM Transacciones"
-    df = pd.read_sql(query, conn)
-    conn.close()
-    return df
-
-# Inicio de la app
-try:
-    # Cargamos los datos crudos
-    df_raw = cargar_datos()
-
-    # Barra lateral (sidebar) - Panel de control
-    with st.sidebar:
-        st.header("🛠️ Panel de Control")
-        st.markdown("---")
-        st.write("Usa estos filtros para segmentar la información del dashboard.")
-
-        # Filtro 1 - Despegable múltiple por tipo de operación
-        # Obtenemos los tipos únicos de la DB
-        tipos_disponibles = df_raw['tipo_operacion'].unique()
-        # Creamos el widget de selección múltiple
-        tipos_seleccionados = st.multiselect(
-            "Filtrar por Tipo de Operación:",
-            options = tipos_disponibles,
-            default = tipos_disponibles, # Por defecto marcan todos
-            help = "Seleccioná uno o más tipos para ver en los gráficos."
-        )
-
-        # Filtro 2 - Checkbox simple
-        mostrar_solo_fraudes = st.checkbox("🚨 Ver SOLO Fraudes confirmados")
+    with engine.connect() as conn:
+        # Transacciones Generales
+        dataframe_transaccion = pd.read_sql(text("SELECT TOP 500 * FROM Transacciones ORDER BY fecha_hora DESC"), conn)
         
-        st.markdown("---")
-        st.info("ℹ️ Dashboard conectado a SQL Server local.")
+        # Razones de auditoría de fraudes
+        try:
+            dataframe_audit = pd.read_sql(text("SELECT TOP 100 * FROM Auditoria_Fraude ORDER BY fecha_auditoria DESC"), conn)
+        except:
+            dataframe_audit = pd.DataFrame() # Si no existe la tabla, DataFrame vacío
+            
+    return dataframe_transaccion, dataframe_audit
 
-    # Lógica de filtrado
-    # Creamos una copia para no modificar los datos originales
-    df_filtrado = df_raw.copy()
+df, df_audit = cargar_datos()
 
-    # 1. Aplicamos Filtro de Tipo (Si el usuario desmarcó algo)
-    if tipos_seleccionados:
-        df_filtrado = df_filtrado[df_filtrado['tipo_operacion'].isin(tipos_seleccionados)]
+# Aplicar filtros
+if tipo_filtro:
+    df = df[df['tipo_operacion'].isin(tipo_filtro)]
 
-    # 2. Aplicamos Filtro de Solo Fraudes (Si marcó el checkbox)
-    if mostrar_solo_fraudes:
-        df_filtrado = df_filtrado[df_filtrado['estado'] == 'RECHAZADA']
+# KPIs
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Transacciones Totales", len(df))
+col2.metric("Fraudes Detectados", len(df[df['estado'] == 'RECHAZADA']))
+col3.metric("Monto Bloqueado", f"${df[df['estado'] == 'RECHAZADA']['monto'].sum():,.0f}")
 
-    # Título con sombra usando el CSS que definimos arriba
-    st.markdown('<p class="titulo-sombra">🛡️ BankGuard: Monitor de Fraude V2</p>', unsafe_allow_html=True)
-    st.markdown("---")
+# Calcular % de Fraude
+tasa_fraude = (len(df[df['estado'] == 'RECHAZADA']) / len(df) * 100) if len(df) > 0 else 0
+col4.metric("Tasa de Riesgo", f"{tasa_fraude:.1f}%")
 
-    # Usamos los datos filtrados para todo lo demás
+st.divider()
+
+# Sección 1: Análisis de Fraudes
+if not df_audit.empty:
+    st.subheader("Análisis de Amenazas Detectadas")
+    c_audit1, c_audit2 = st.columns((2, 1))
     
-    # Cálculos de KPIs en base a lo filtrado
-    transacciones_totales = len(df_filtrado)
-    fraudes = df_filtrado[df_filtrado['estado'] == 'RECHAZADA']
-    aprobadas = df_filtrado[df_filtrado['estado'] == 'APROBADA']
-    
-    porcentaje_fraude = (len(fraudes) / transacciones_totales) * 100 if transacciones_totales > 0 else 0
-
-    # Fila 1 - Métricas
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Transacciones Visibles", transacciones_totales, help="Total según filtros aplicados")
-    col2.metric("✅ Aprobadas", len(aprobadas))
-    col3.metric("🚨 Fraudes Detectados", len(fraudes), delta_color="inverse")
-
-    # Usamos un color condicional para la tasa
-    col4.metric("Tasa de Fraude (Filtrada)", f"{porcentaje_fraude:.2f}%", 
-                delta=f"{porcentaje_fraude:.1f}%" if porcentaje_fraude > 5 else None,
-                delta_color="inverse")
-    st.markdown("---")
-
-    # Fila 2 - Gráficos
-    if transacciones_totales > 0:
-        c1, c2 = st.columns((2, 1))
-
-        with c1:
-            st.subheader(f"Tendencia ({', '.join(tipos_seleccionados) if tipos_seleccionados else 'Todo'})")
-            fig_scatter = px.scatter(
-                df_filtrado, # Usamos el DF filtrado
-                x="transaccion_id", y="monto", color="estado", size="monto",
-                color_discrete_map={"APROBADA": "green", "RECHAZADA": "red", "PENDIENTE": "gray"},
-                hover_data=['tipo_operacion', 'ip_origen'] # Más info al pasar el mouse
-            )
-            st.plotly_chart(fig_scatter, use_container_width=True)
-
-        with c2:
-            st.subheader("Distribución")
-            fig_pie = px.pie(
-                df_filtrado, # Usamos el DF filtrado
-                names="estado", color="estado",
-                color_discrete_map={"APROBADA": "green", "RECHAZADA": "red", "PENDIENTE": "gray"},
-                hole=0.4
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
-
-        # Fila 3 - Tabla Detalle
-        st.subheader("Detalle de Transacciones (Según Filtros)")
-
-        # Mostramos las últimas 15 del filtro actual
+    with c_audit1:
+        # Tabla de Auditoría
         st.dataframe(
-            df_filtrado.sort_values(by='transaccion_id', ascending=False).head(15),
-            use_container_width=True,
-            hide_index=True # Ocultamos el índice numérico feo de pandas
+            df_audit[['transaccion_id', 'regla_activada', 'detalle', 'fecha_auditoria']],
+            width = 'stretch',
+            hide_index = True
         )
-    else:
-        st.warning("No hay datos que coincidan con los filtros seleccionados.")
+        
+    with c_audit2:
+        # Gráfico: Monto VS Velocidad
+        fig_audit = px.bar(
+            df_audit, 
+            x = 'regla_activada', 
+            title = "Amenazas por Tipo",
+            color = 'regla_activada',
+            color_discrete_map = {"MONTO_ALTO": "#FF4B4B", "VELOCIDAD_ALTA": "#FFA500"}
+        )
+        st.plotly_chart(fig_audit, width = 'stretch')
+else:
+    st.info("No hay registros en la auditoría de fraudes aún.")
 
-except Exception as e:
-    st.error(f"Error de Sistema: {e}")
-    st.exception(e)
+# Sección 2: Transacciones en tiempo real
+st.subheader("Transacciones en Tiempo Real")
+
+if not df.empty:
+    # Gráfico Scatter (Monto vs Tiempo)
+    fig = px.scatter(
+        df, 
+        x = "transaccion_id", 
+        y = "monto", 
+        color = "estado",
+        size = "monto",
+        color_discrete_map = {"APROBADA": "#00CC96", "RECHAZADA": "#EF553B", "PENDIENTE": "#636EFA"},
+        title = "Dispersión de Transacciones (Monto vs ID)"
+    )
+    st.plotly_chart(fig, width = 'stretch')
+
+    # Últimas transacciones
+    st.dataframe(df.head(10), width = 'stretch', hide_index = True)
+else:
+    st.warning("Esperando datos")
