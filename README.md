@@ -98,5 +98,6 @@ El desarrollo de BankGuard es continuo. Estas son las próximas funcionalidades 
 - [ ] 🐳 Dockerización: Containerización de la app y la base de datos para despliegue ágil.
 - [ ] 🔔 Sistema de Alertas: Integración con API de Email o Slack para notificaciones críticas instantáneas.
 
-Autor
-Agustin De Roo, linkedin.com/in/agustinderoo
+**Autor:** Agustin De Roo
+
+**Contacto:** agustinderoo05@gmail.com | www.linkedin.com/in/agustinderoo
