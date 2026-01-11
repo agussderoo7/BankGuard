@@ -6,15 +6,17 @@
 
 ## 🚀 Características Principales
 
-* ** Motor de Decisión Híbrido:**
+### Motor de Decisión Híbrido:
     * **Regla de Monto:** Bloqueo automático de transacciones superiores a límites definidos (>$500k).
     * **Regla de Velocidad:** Detección de "Ráfagas" (>3 transacciones por usuario en <1 minuto).
-* ** Dashboard en Tiempo Real:** Interfaz desarrollada en Streamlit para monitoreo de KPIs, alertas y dispersión de datos.
-* ** Ingeniería de Datos Robusta:**
+### Dashboard en Tiempo Real:
+Interfaz desarrollada en Streamlit para monitoreo de KPIs, alertas y dispersión de datos.
+### Ingeniería de Datos Robusta:
     * Integración **SQLAlchemy** para ingesta masiva de datos (Lectura optimizada).
     * Conexión **PyODBC** para escritura transaccional de alta velocidad.
     * Auditoría persistente en **SQL Server** para análisis forense.
-* ** Simulación de Estrés:** Generador de datos sintéticos incluido para realizar pruebas de carga y validar la latencia del motor.
+### Simulación de Estrés:
+Generador de datos sintéticos incluido para realizar pruebas de carga y validar la latencia del motor.
 
 ---
 
