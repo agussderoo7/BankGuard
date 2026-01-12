@@ -34,7 +34,7 @@ engine = getEngine()
 # Título
 c_logo, c_title = st.columns([1, 6])
 with c_logo:
-    st.markdown("# 🛡️")
+    st.markdown("# 🦈🛡️")
 with c_title:
     st.title("BankGuard Security Center")
     st.markdown("Monitoreo de fraudes transaccionales en tiempo real")
