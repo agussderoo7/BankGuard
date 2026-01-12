@@ -96,9 +96,9 @@ python database/seed_data.py
 
 ## 🔮 Próximos Pasos
 El desarrollo de BankGuard es continuo. Estas son las próximas funcionalidades planificadas:
-- [ ] 🧠 Machine Learning: Implementación de Isolation Forest para detección de anomalías no supervisadas (patrones desconocidos).
-- [ ] 🐳 Dockerización: Containerización de la app y la base de datos para despliegue ágil.
-- [ ] 🔔 Sistema de Alertas: Integración con API de Email o Slack para notificaciones críticas instantáneas.
+- [ ]  Machine Learning: Implementación de Isolation Forest para detección de anomalías no supervisadas (patrones desconocidos).
+- [ ]  Dockerización: Containerización de la app y la base de datos para despliegue ágil.
+- [ ]  Sistema de Alertas: Integración con API de Email o Slack para notificaciones críticas instantáneas.
 
 **Autor:** Agustin De Roo
 
