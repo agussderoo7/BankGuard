@@ -26,7 +26,7 @@ Generador de datos sintéticos incluido para realizar pruebas de carga y validar
 * **Base de Datos:** Microsoft SQL Server
 * **Librerías Clave:**
     * `pandas` (Manipulación de DataFrames)
-    * `sqlalchemy` (ORM y Gestión de Conexiones)
+    * `sqlalchemy` (Gestión de Conexiones)
     * `plotly` (Visualización Interactiva)
     * `streamlit` (Frontend Web)
     * `pyodbc` (Driver SQL)
