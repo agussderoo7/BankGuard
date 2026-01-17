@@ -20,7 +20,7 @@ Generador de datos sintéticos incluido para realizar pruebas de carga y validar
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+## 🛠️ Tecnologías
 
 * **Lenguaje:** Python 3.11
 * **Base de Datos:** Microsoft SQL Server
