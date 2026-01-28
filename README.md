@@ -11,7 +11,7 @@
 - **Regla de Velocidad:** Detección de "Ráfagas" (>3 transacciones por usuario en <1 minuto).
 ### Dashboard en Tiempo Real:
 Interfaz desarrollada en Streamlit para monitoreo de KPIs, alertas y dispersión de datos.
-### Ingeniería de Datos Robusta:
+### Ingeniería de Datos:
 - Integración **SQLAlchemy** para ingesta masiva de datos (Lectura optimizada).
 - Conexión **PyODBC** para escritura transaccional de alta velocidad.
 - Auditoría persistente en **SQL Server** para análisis forense.
